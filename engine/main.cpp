@@ -102,7 +102,12 @@ public:
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
         glCullFace(GL_BACK);
-        glClearColor(0.42f, 0.68f, 0.88f, 1.0f);
+        glEnable(GL_NORMALIZE);
+        glShadeModel(GL_SMOOTH);
+        glClearColor(0.48f, 0.70f, 0.91f, 1.0f);
+        const GLfloat globalAmbient[]{0.34f, 0.36f, 0.40f, 1.0f};
+        glLightModelfv(GL_LIGHT_MODEL_AMBIENT, globalAmbient);
+        glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
         running = true;
         return true;
     }
@@ -182,6 +187,7 @@ private:
         glDisable(GL_CULL_FACE);
         glColor3f(0.16f, 0.42f, 0.19f);
         glBegin(GL_QUADS);
+        glNormal3f(0.0f, 1.0f, 0.0f);
         glVertex3f(-180, -0.08f, -180); glVertex3f(180, -0.08f, -180);
         glVertex3f(180, -0.08f, 180); glVertex3f(-180, -0.08f, 180);
         glEnd();
@@ -206,6 +212,7 @@ private:
 
             glColor3f(0.19f, 0.19f, 0.21f);
             glBegin(GL_QUADS);
+            glNormal3f(0.0f, 1.0f, 0.0f);
             glVertex3f(TRACK_X*c0-ox0, 0.0f, TRACK_Z*s0-oz0);
             glVertex3f(TRACK_X*c0+ox0, 0.0f, TRACK_Z*s0+oz0);
             glVertex3f(TRACK_X*c1+ox1, 0.0f, TRACK_Z*s1+oz1);
@@ -215,6 +222,7 @@ private:
             if (i % 2 == 0) glColor3f(0.88f, 0.88f, 0.88f);
             else glColor3f(0.82f, 0.12f, 0.10f);
             glBegin(GL_QUADS);
+            glNormal3f(0.0f, 1.0f, 0.0f);
             glVertex3f(TRACK_X*c0-ox0*1.12f, 0.015f, TRACK_Z*s0-oz0*1.12f);
             glVertex3f(TRACK_X*c0-ox0, 0.015f, TRACK_Z*s0-oz0);
             glVertex3f(TRACK_X*c1-ox1, 0.015f, TRACK_Z*s1-oz1);
@@ -299,8 +307,17 @@ private:
         glEnable(GL_LIGHT0);
         glEnable(GL_COLOR_MATERIAL);
         glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-        const GLfloat lightPosition[]{-35.0f, 70.0f, -20.0f, 1.0f};
+        const GLfloat lightPosition[]{-0.45f, 1.0f, -0.35f, 0.0f};
+        const GLfloat lightAmbient[]{0.22f, 0.23f, 0.26f, 1.0f};
+        const GLfloat lightDiffuse[]{0.92f, 0.90f, 0.84f, 1.0f};
+        const GLfloat lightSpecular[]{0.38f, 0.38f, 0.36f, 1.0f};
+        const GLfloat materialSpecular[]{0.32f, 0.32f, 0.32f, 1.0f};
         glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
+        glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmbient);
+        glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDiffuse);
+        glLightfv(GL_LIGHT0, GL_SPECULAR, lightSpecular);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, materialSpecular);
+        glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 36.0f);
         drawGround();
         drawTrack();
         drawCar();
