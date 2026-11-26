@@ -1,33 +1,54 @@
-# Apex Racing
+# Apex Racing Engine
 
-Jogo de corrida 3D para navegador, construído com uma engine própria em JavaScript. Three.js é usado como camada de renderização; ciclo de jogo, sistemas, dinâmica arcade, controles, câmera e regras da corrida ficam no código do projeto.
+**Versão 0.2.0 — engine nativa em C++**
 
-## Executar
+A Apex Racing Engine agora é um projeto nativo em **C++20**, usando **SDL2** para janela, eventos e entrada e **OpenGL** para renderização 3D. O motor do jogo, a física do veículo, a câmera e o circuito são implementados no próprio projeto.
+
+## Requisitos
+
+- C++20 (GCC 13+ ou Clang 16+)
+- CMake 3.20+
+- SDL2
+- OpenGL
+
+No Arch Linux:
+
 ```bash
-npm install
-npm run dev
-``
+sudo pacman -S --needed base-devel cmake sdl2 mesa
+```
+
+## Compilar
+
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j
+./build/apex-racing
+```
 
 ## Controles
-- **W / ↑** acelerar
-- **S / ↓** frear e dar ré
-- **A / ←** virar à esquerda
-- **D / →** virar à direita
-- **R** reposicionar o carro
 
-## Estrutura
-- `src/engine/Engine.js`: cena, câmera, renderização e ciclo principal.
-- `src/engine/VehiclePhysics.js`: aceleração, frenagem, arrasto e direção.
-- `src/game/track.js`: circuito procedural e iluminação.
-- `src/game/car.js`: carro 3D procedural.
-- `src/main.js`: corrida, entradas, HUD e câmera.
+| Tecla | Ação |
+|---|---|
+| W / S ou ↑ / ↓ | Acelerar / frear e ré |
+| A / D ou ← / → | Virar |
+| P | Pausar |
+| R | Reiniciar posição e corrida |
+| Esc | Sair |
 
-## Roadmap
-- [x] Engine base e renderização 3D
-- [x] Circuito procedural e carro
-- [x] Controles e física arcade inicial
-- [x] HUD e cronômetro
-- [ ] Colisões completas, áudio e adversários
-- [ ] Seleção de carros e editor de pistas
+## O que existe nesta versão
 
-**0.1.0 — First Track**
+- Loop principal em C++ com delta time.
+- Janela e eventos com SDL2.
+- Renderização 3D OpenGL.
+- Circuito oval procedural, asfalto, zebras e marcação central.
+- Carro 3D construído por geometria.
+- Física arcade com aceleração, frenagem, ré, direção, inércia e perda de velocidade fora da pista.
+- Câmera chase que acompanha o veículo.
+- Velocidade, voltas e estado da corrida no título da janela.
+
+## Arquitetura
+
+- `engine/main.cpp`: inicialização SDL/OpenGL, loop, renderização e integração dos sistemas.
+- `CMakeLists.txt`: configuração e build nativo.
+
+A engine não depende de navegador, Node.js, Vite ou Three.js para executar o jogo.
