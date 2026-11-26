@@ -50,7 +50,7 @@ struct Vehicle {
         if (!throttle && !brake) speed *= std::pow(0.985f, dt * 60.0f);
         speed = std::clamp(speed, -12.0f, 62.0f);
 
-        const float steerInput = (right ? 1.0f : 0.0f) - (left ? 1.0f : 0.0f);
+        const float steerInput = (left ? 1.0f : 0.0f) - (right ? 1.0f : 0.0f);
         steering += (steerInput - steering) * std::min(1.0f, dt * 7.0f);
         const float speedFactor = std::clamp(std::abs(speed) / 18.0f, 0.0f, 1.0f);
         yaw += steering * speedFactor * (speed >= 0.0f ? 1.0f : -1.0f) * 1.75f * dt;
@@ -264,7 +264,7 @@ private:
     void drawCar() {
         glPushMatrix();
         glTranslatef(vehicle.position.x, vehicle.position.y, vehicle.position.z);
-        glRotatef(vehicle.yaw * 180.0f / PI, 0, 1, 0);
+        glRotatef(-vehicle.yaw * 180.0f / PI, 0, 1, 0);
         glColor3f(0.82f, 0.055f, 0.045f);
         drawCube(2.0f, 0.65f, 4.0f);
         glPushMatrix();
