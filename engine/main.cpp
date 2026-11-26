@@ -5,6 +5,7 @@
 #include <array>
 #include <cmath>
 #include <cstdio>
+#include <cctype>
 #include <string>
 
 namespace apex {
@@ -123,7 +124,7 @@ public:
 
             processEvents();
             const Uint8* keys = SDL_GetKeyboardState(nullptr);
-            if (!paused) vehicle.update(dt, keys);
+            if (screen == Screen::Racing) vehicle.update(dt, keys);
             render();
             updateTitle();
         }
@@ -139,7 +140,12 @@ private:
     SDL_Window* window{};
     SDL_GLContext context{};
     int width{1280}, height{720};
-    bool running{}, paused{};
+    enum class Screen { Menu, Racing, Pause, Options };
+    Screen screen{Screen::Menu};
+    int menuSelection{};
+    bool musicEnabled{true};
+    bool soundEnabled{true};
+    bool running{};
     Vehicle vehicle;
     float elapsed{};
 
@@ -151,10 +157,53 @@ private:
                 width = std::max(1, event.window.data1);
                 height = std::max(1, event.window.data2);
             }
-            if (event.type == SDL_KEYDOWN && !event.key.repeat) {
-                if (event.key.keysym.sym == SDLK_ESCAPE) running = false;
-                if (event.key.keysym.sym == SDLK_r) vehicle.reset();
-                if (event.key.keysym.sym == SDLK_p) paused = !paused;
+            if (event.type != SDL_KEYDOWN || event.key.repeat) continue;
+
+            const SDL_Keycode key = event.key.keysym.sym;
+            if (screen == Screen::Racing) {
+                if (key == SDLK_ESCAPE || key == SDLK_p) screen = Screen::Pause;
+                if (key == SDLK_r) vehicle.reset();
+                continue;
+            }
+
+            if (key == SDLK_UP || key == SDLK_w) {
+                const int count = screen == Screen::Menu ? 3 : (screen == Screen::Pause ? 4 : 3);
+                menuSelection = (menuSelection + count - 1) % count;
+            } else if (key == SDLK_DOWN || key == SDLK_s) {
+                const int count = screen == Screen::Menu ? 3 : (screen == Screen::Pause ? 4 : 3);
+                menuSelection = (menuSelection + 1) % count;
+            } else if (key == SDLK_ESCAPE) {
+                if (screen == Screen::Pause) screen = Screen::Racing;
+                else if (screen == Screen::Options) {
+                    screen = Screen::Menu;
+                    menuSelection = 1;
+                } else running = false;
+            } else if (key == SDLK_RETURN || key == SDLK_SPACE) {
+                if (screen == Screen::Menu) {
+                    if (menuSelection == 0) {
+                        vehicle.reset();
+                        screen = Screen::Racing;
+                    } else if (menuSelection == 1) {
+                        screen = Screen::Options;
+                        menuSelection = 0;
+                    } else running = false;
+                } else if (screen == Screen::Pause) {
+                    if (menuSelection == 0) screen = Screen::Racing;
+                    else if (menuSelection == 1) {
+                        vehicle.reset();
+                        screen = Screen::Racing;
+                    } else if (menuSelection == 2) {
+                        screen = Screen::Menu;
+                        menuSelection = 0;
+                    } else running = false;
+                } else if (screen == Screen::Options) {
+                    if (menuSelection == 0) musicEnabled = !musicEnabled;
+                    else if (menuSelection == 1) soundEnabled = !soundEnabled;
+                    else {
+                        screen = Screen::Menu;
+                        menuSelection = 1;
+                    }
+                }
             }
         }
     }
@@ -292,6 +341,112 @@ private:
         glPopMatrix();
     }
 
+    void drawRect(float x, float y, float w, float h, float r, float g, float b, float a = 1.0f) {
+        glColor4f(r, g, b, a);
+        glBegin(GL_QUADS);
+        glVertex2f(x, y); glVertex2f(x + w, y);
+        glVertex2f(x + w, y + h); glVertex2f(x, y + h);
+        glEnd();
+    }
+
+    std::array<const char*, 7> glyph(char c) {
+        switch (c) {
+            case 'A': return {"01110","10001","10001","11111","10001","10001","10001"};
+            case 'B': return {"11110","10001","10001","11110","10001","10001","11110"};
+            case 'C': return {"01111","10000","10000","10000","10000","10000","01111"};
+            case 'D': return {"11110","10001","10001","10001","10001","10001","11110"};
+            case 'E': return {"11111","10000","10000","11110","10000","10000","11111"};
+            case 'G': return {"01111","10000","10000","10111","10001","10001","01111"};
+            case 'I': return {"11111","00100","00100","00100","00100","00100","11111"};
+            case 'K': return {"10001","10010","10100","11000","10100","10010","10001"};
+            case 'L': return {"10000","10000","10000","10000","10000","10000","11111"};
+            case 'M': return {"10001","11011","10101","10101","10001","10001","10001"};
+            case 'N': return {"10001","11001","10101","10011","10001","10001","10001"};
+            case 'O': return {"01110","10001","10001","10001","10001","10001","01110"};
+            case 'P': return {"11110","10001","10001","11110","10000","10000","10000"};
+            case 'Q': return {"01110","10001","10001","10001","10101","10010","01101"};
+            case 'R': return {"11110","10001","10001","11110","10100","10010","10001"};
+            case 'S': return {"01111","10000","10000","01110","00001","00001","11110"};
+            case 'T': return {"11111","00100","00100","00100","00100","00100","00100"};
+            case 'U': return {"10001","10001","10001","10001","10001","10001","01110"};
+            case 'V': return {"10001","10001","10001","10001","10001","01010","00100"};
+            case 'X': return {"10001","10001","01010","00100","01010","10001","10001"};
+            case ' ': return {"00000","00000","00000","00000","00000","00000","00000"};
+            default: return {"11111","10001","00010","00100","00100","00000","00100"};
+        }
+    }
+
+    void drawText(const std::string& text, float x, float y, float scale, float r, float g, float b) {
+        glColor3f(r, g, b);
+        float cursor = x;
+        for (char raw : text) {
+            const auto rows = glyph(static_cast<char>(std::toupper(static_cast<unsigned char>(raw))));
+            for (int row = 0; row < 7; ++row) {
+                for (int col = 0; col < 5; ++col) {
+                    if (rows[row][col] == '1')
+                        drawRect(cursor + col * scale, y + row * scale, scale * 0.82f, scale * 0.82f, r, g, b);
+                }
+            }
+            cursor += scale * 6.0f;
+        }
+    }
+
+    void drawMenuOverlay() {
+        glDisable(GL_LIGHTING);
+        glDisable(GL_DEPTH_TEST);
+        glMatrixMode(GL_PROJECTION);
+        glPushMatrix();
+        glLoadIdentity();
+        glOrtho(0, width, height, 0, -1, 1);
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+        glLoadIdentity();
+
+        drawRect(0, 0, static_cast<float>(width), static_cast<float>(height), 0.015f, 0.025f, 0.045f, 0.76f);
+        const float centerX = width * 0.5f;
+        drawText("APEX RACING", centerX - 165.0f, height * 0.20f, 7.0f, 0.95f, 0.97f, 1.0f);
+
+        std::array<std::string, 4> labels{};
+        int count = 0;
+        if (screen == Screen::Menu) {
+            labels = {"START RACE", "OPTIONS", "QUIT", ""};
+            count = 3;
+        } else if (screen == Screen::Pause) {
+            labels = {"CONTINUE", "RESTART", "MAIN MENU", "QUIT"};
+            count = 4;
+        } else {
+            labels = {std::string("MUSIC ") + (musicEnabled ? "ON" : "OFF"),
+                      std::string("SOUND ") + (soundEnabled ? "ON" : "OFF"), "BACK", ""};
+            count = 3;
+        }
+
+        const float buttonW = std::min(420.0f, width * 0.62f);
+        const float buttonH = 62.0f;
+        const float startY = height * 0.42f;
+        for (int i = 0; i < count; ++i) {
+            const float x = centerX - buttonW * 0.5f;
+            const float y = startY + i * 82.0f;
+            const bool selected = i == menuSelection;
+            drawRect(x, y, buttonW, buttonH,
+                     selected ? 0.72f : 0.08f, selected ? 0.10f : 0.12f,
+                     selected ? 0.07f : 0.17f, 0.96f);
+            drawRect(x, y, 5.0f, buttonH, 0.95f, 0.95f, 0.95f);
+            const float textWidth = static_cast<float>(labels[i].size()) * 6.0f * 4.0f;
+            drawText(labels[i], centerX - textWidth * 0.5f, y + 18.0f, 4.0f,
+                     selected ? 1.0f : 0.82f, selected ? 1.0f : 0.86f, selected ? 1.0f : 0.92f);
+        }
+
+        const std::string hint = screen == Screen::Racing ? "ESC  PAUSE" : "UP DOWN  SELECT  ENTER";
+        drawText(hint, centerX - static_cast<float>(hint.size()) * 9.0f, height - 54.0f,
+                 2.0f, 0.72f, 0.78f, 0.86f);
+
+        glPopMatrix();
+        glMatrixMode(GL_PROJECTION);
+        glPopMatrix();
+        glMatrixMode(GL_MODELVIEW);
+        glEnable(GL_DEPTH_TEST);
+    }
+
     void render() {
         glViewport(0, 0, width, height);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -322,18 +477,20 @@ private:
         drawTrack();
         drawCar();
         glDisable(GL_LIGHTING);
+        if (screen != Screen::Racing) drawMenuOverlay();
         SDL_GL_SwapWindow(window);
     }
 
     void updateTitle() {
         const int kmh = static_cast<int>(std::abs(vehicle.speed) * 3.6f);
-        const int remaining = std::max(0, 3 - vehicle.laps);
         char title[180];
+        const char* mode = screen == Screen::Menu ? "MENU" :
+                           screen == Screen::Pause ? "PAUSADO" :
+                           screen == Screen::Options ? "OPCOES" : "CORRIDA";
         std::snprintf(title, sizeof(title),
-            "Apex Racing Engine 0.2.0 | %03d km/h | Voltas: %d/3 | %s | WASD/Setas: dirigir | P: pausa | R: reset",
-            kmh, vehicle.laps, paused ? "PAUSADO" : "CORRIDA");
+            "Apex Racing Engine 0.3.0 | %s | %03d km/h | Voltas: %d/3",
+            mode, kmh, vehicle.laps);
         SDL_SetWindowTitle(window, title);
-        (void)remaining;
     }
 };
 } // namespace apex
