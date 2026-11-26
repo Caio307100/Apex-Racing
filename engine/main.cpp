@@ -87,7 +87,7 @@ public:
         SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
         SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 
-        window = SDL_CreateWindow("Apex Racing Engine 0.2.0 | C++",
+        window = SDL_CreateWindow("Apex Racing Engine 0.3.0 | C++",
             SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height,
             SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
         if (!window) {
@@ -394,6 +394,7 @@ private:
     void drawMenuOverlay() {
         glDisable(GL_LIGHTING);
         glDisable(GL_DEPTH_TEST);
+        glDisable(GL_CULL_FACE);
         glMatrixMode(GL_PROJECTION);
         glPushMatrix();
         glLoadIdentity();
@@ -445,6 +446,7 @@ private:
         glPopMatrix();
         glMatrixMode(GL_MODELVIEW);
         glEnable(GL_DEPTH_TEST);
+        glEnable(GL_CULL_FACE);
     }
 
     void render() {
