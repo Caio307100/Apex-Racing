@@ -53,7 +53,7 @@ struct Vehicle {
         const float steerInput = (left ? 1.0f : 0.0f) - (right ? 1.0f : 0.0f);
         steering += (steerInput - steering) * std::min(1.0f, dt * 7.0f);
         const float speedFactor = std::clamp(std::abs(speed) / 18.0f, 0.0f, 1.0f);
-        yaw += steering * speedFactor * (speed >= 0.0f ? 1.0f : -1.0f) * 1.75f * dt;
+        yaw -= steering * speedFactor * (speed >= 0.0f ? 1.0f : -1.0f) * 1.75f * dt;
 
         const Vec3 forward{std::sin(yaw), 0.0f, -std::cos(yaw)};
         position = position + forward * (speed * dt);
