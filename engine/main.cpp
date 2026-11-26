@@ -63,7 +63,7 @@ struct Vehicle {
             (position.z * position.z) / (TRACK_Z * TRACK_Z));
         const float distanceFromCenter = std::abs(normalizedRadius - 1.0f) * 32.0f;
         if (distanceFromCenter > ROAD_HALF_WIDTH - 1.0f) {
-            speed *= std::pow(0.965f, dt * 60.0f);
+            speed *= std::pow(0.995f, dt * 60.0f);
         }
 
         float angle = std::atan2(position.z / TRACK_Z, position.x / TRACK_X);
