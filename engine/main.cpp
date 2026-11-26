@@ -67,7 +67,8 @@ struct Vehicle {
         }
 
         float angle = std::atan2(position.z / TRACK_Z, position.x / TRACK_X);
-        if (previousTrackAngle > 2.7f && angle < -2.7f && speed > 2.0f) ++laps;
+        if (angle < 0.0f) angle += 2.0f * PI;
+        if (previousTrackAngle > 5.8f && angle < 0.45f && speed > 2.0f) ++laps;
         previousTrackAngle = angle;
         position.y = 0.55f;
     }
